@@ -3,7 +3,48 @@
 #
 FROM node:8-alpine 
 
-LABEL Author="MiGoller, mrproper, pschmitt & moeiscool"
+# Build arguments ...
+# Shinobi's version information
+ARG ARG_APP_VERSION 
+
+# The channel or branch triggering the build.
+ARG ARG_APP_CHANNEL
+
+# The commit sha triggering the build.
+ARG ARG_APP_COMMIT
+
+# Update Shinobi on every container start?
+#   manual:     Update Shinobi manually. New Docker images will always retrieve the latest version.
+#   auto:       Update Shinobi on every container start.
+ARG ARG_APP_UPDATE=auto
+
+# Build data
+ARG ARG_BUILD_DATE
+
+# ShinobiPro branch, defaults to master
+ARG ARG_APP_BRANCH=master
+
+# Basic build-time metadata as defined at http://label-schema.org
+LABEL org.label-schema.build-date=${ARG_BUILD_DATE} \
+    org.label-schema.docker.dockerfile="/Dockerfile" \
+    org.label-schema.license="GPLv3" \
+    org.label-schema.name="MiGoller" \
+    org.label-schema.vendor="MiGoller" \
+    org.label-schema.version="${ARG_APP_VERSION}-${ARG_APP_BRANCH}" \
+    org.label-schema.description="Shinobi Pro - The Next Generation in Open-Source Video Management Software" \
+    org.label-schema.url="https://gitlab.com/users/MiGoller/projects" \
+    org.label-schema.vcs-ref=${ARG_APP_COMMIT} \
+    org.label-schema.vcs-type="Git" \
+    org.label-schema.vcs-url="https://github.com/tingtom/Shinobi.git" \
+    maintainer="MiGoller" \
+    Author="MiGoller, mrproper, pschmitt & moeiscool"
+
+# Persist app-reladted build arguments
+ENV APP_VERSION=$ARG_APP_VERSION \
+    APP_CHANNEL=$ARG_APP_CHANNEL \
+    APP_COMMIT=$ARG_APP_COMMIT \
+    APP_UPDATE=$ARG_APP_UPDATE \
+    APP_BRANCH=${ARG_APP_BRANCH}
 
 # Set environment variables to default values
 # ADMIN_USER : the super user login name
@@ -23,15 +64,19 @@ ENV ADMIN_USER=admin@shinobi.video \
     MYSQL_HOST=localhost \
     MYSQL_DATABASE=ccio \
     MYSQL_ROOT_PASSWORD=blubsblawoot \
-    MYSQL_ROOT_USER=root
+    MYSQL_ROOT_USER=root 
 
 
-# Create additional directories for: Custom configuration, working directory, database directory
+# Create additional directories for: Custom configuration, working directory, database directory, scripts
 RUN mkdir -p \
         /config \
         /opt/shinobi \
         /var/lib/mysql
 
+# Assign working directory
+WORKDIR /opt/shinobi
+
+RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git ./ShinobiPro
 
 # Install package dependencies
 RUN apk update && \
@@ -61,7 +106,6 @@ RUN apk update && \
         tar \ 
         x264
 
-# Install additional packages
 RUN apk update && \
     apk add --no-cache \
         ffmpeg \
@@ -76,28 +120,24 @@ RUN apk update && \
         tar \
         xz
 
-RUN sed -ie "s/^bind-address\s*=\s*127\.0\.0\.1$/#bind-address = 0.0.0.0/" /etc/my.cnf
-RUN sed -ie "s/^skip-networking$/#skip-networking/" /etc/my.cnf
+RUN sed -ie "s/^bind-address\s*=\s*127\.0\.0\.1$/#bind-address = 0.0.0.0/" /etc/my.cnf.d/mariadb-server.cnf && \
+    sed -ie "s/^skip-networking$/#skip-networking/" /etc/my.cnf.d/mariadb-server.cnf
 
-# Install ffmpeg static build version from cdn.shinobi.video
-RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz && \
-    tar xpvf ./ffmpeg-release-64bit-static.tar.xz -C ./ && \
-    cp -f ./ffmpeg-3.3.4-64bit-static/ff* /usr/bin/ && \
-    chmod +x /usr/bin/ff* && \
-    rm -f ffmpeg-release-64bit-static.tar.xz && \
-    rm -rf ./ffmpeg-3.3.4-64bit-static
+# Install Shinobi app including NodeJS dependencies
+COPY ./ShinobiPro/ ./
 
-# Assign working directory
-WORKDIR /opt/shinobi
-
-# Clone the Shinobi CCTV PRO repo and install Shinobi app including NodeJS dependencies
-RUN git clone https://github.com/tingtom/Shinobi.git /opt/shinobi && \
-    npm i npm@latest -g && \
+RUN npm i npm@latest -g && \
     npm install pm2 -g && \
-    npm install
+    npm install jsonfile && \
+    npm install edit-json-file && \
+    npm install ffbinaries && \
+    npm install --unsafe-perm && \
+    npm audit fix --force
 
 # Copy code
-COPY docker-entrypoint.sh pm2Shinobi.yml ./
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+COPY pm2Shinobi.yml ./
+COPY /tools/modifyJson.js ./tools
 RUN chmod -f +x ./*.sh
 
 # Copy default configuration files

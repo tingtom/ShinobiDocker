@@ -5,4 +5,6 @@ Dockerfile
 node_modules
 videos
 dbdata
-datadir
+datadir*
+*-image.sh
+microservice_datadir*
