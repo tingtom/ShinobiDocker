@@ -76,8 +76,6 @@ RUN mkdir -p \
 # Assign working directory
 WORKDIR /opt/shinobi
 
-RUN git clone https://github.com/tingtom/Shinobi.git ./ShinobiPro
-
 # Install package dependencies
 RUN apk update && \
     apk add --no-cache \ 
@@ -123,6 +121,8 @@ RUN apk update && \
 RUN sed -ie "s/^bind-address\s*=\s*127\.0\.0\.1$/#bind-address = 0.0.0.0/" /etc/my.cnf.d/mariadb-server.cnf && \
     sed -ie "s/^skip-networking$/#skip-networking/" /etc/my.cnf.d/mariadb-server.cnf
 
+RUN git clone https://github.com/tingtom/Shinobi.git ./ShinobiPro
+	
 # Install Shinobi app including NodeJS dependencies
 COPY ./ShinobiPro/ ./
 
