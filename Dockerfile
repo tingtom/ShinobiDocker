@@ -76,7 +76,7 @@ RUN mkdir -p \
 # Assign working directory
 WORKDIR /opt/shinobi
 
-RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git ./ShinobiPro
+RUN git clone https://github.com/tingtom/Shinobi.git ./ShinobiPro
 
 # Install package dependencies
 RUN apk update && \
