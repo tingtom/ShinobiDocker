@@ -90,7 +90,7 @@ RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz
 WORKDIR /opt/shinobi
 
 # Clone the Shinobi CCTV PRO repo and install Shinobi app including NodeJS dependencies
-RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git /opt/shinobi && \
+RUN git clone https://github.com/tingtom/Shinobi.git /opt/shinobi && \
     npm i npm@latest -g && \
     npm install pm2 -g && \
     npm install
