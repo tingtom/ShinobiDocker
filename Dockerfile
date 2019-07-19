@@ -121,7 +121,7 @@ RUN apk update && \
 RUN sed -ie "s/^bind-address\s*=\s*127\.0\.0\.1$/#bind-address = 0.0.0.0/" /etc/my.cnf.d/mariadb-server.cnf && \
     sed -ie "s/^skip-networking$/#skip-networking/" /etc/my.cnf.d/mariadb-server.cnf
 
-RUN git clone https://github.com/tingtom/Shinobi.git /opt/shinobi
+RUN git clone -b dev https://github.com/tingtom/Shinobi.git /opt/shinobi
 	
 # Install Shinobi app including NodeJS dependencies
 #COPY ./ShinobiPro/ ./
