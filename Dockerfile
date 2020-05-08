@@ -144,6 +144,7 @@ RUN chmod -f +x ./*.sh
 COPY ./config/conf.sample.json ./config/super.sample.json /opt/shinobi/
 
 VOLUME ["/opt/shinobi/videos"]
+VOLUME ["/opt/shinobi/snapshots"]
 VOLUME ["/config"]
 VOLUME ["/var/lib/mysql"]
 
